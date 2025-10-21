@@ -1,0 +1,7 @@
+Name: Submarine Adventure
+password: f5ne450210
+Alias: submarine_adventure
+Package ID: com.SubmarineAdventure.SA0210
+Application version: 1.0
+Build version: 1
+Min SDK version: 26
