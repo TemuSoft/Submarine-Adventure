@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">Submarine Adventure</string>
+    <string name="level">Level</string>
+    <string name="levels">Levels</string>
+    <string name="oxygen">Oxygen</string>
+    <string name="health">Health</string>
+    <string name="setting">Setting</string>
+    <string name="sound">Sound</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="music">Music</string>
+    <string name="vibration">Vibration</string>
+    <string name="level_completed">LEVEL COMPLETED!</string>
+    <string name="next_level">Next Level</string>
+    <string name="play_again">Play Again</string>
+    <string name="level_failed">LEVEL\nFAILED</string>
+    <string name="body">Body</string>
+    <string name="decor">Decor</string>
+    <string name="defaults">Default</string>
+    <string name="stats">Stats</string>
 </resources>

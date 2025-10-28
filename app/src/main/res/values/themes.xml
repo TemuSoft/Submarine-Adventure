@@ -6,4 +6,33 @@
     </style>
 
     <style name="Theme.SubmarineAdventure" parent="Base.Theme.SubmarineAdventure" />
+
+
+    <style name="text14Theme">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14dp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="fontFamily">@font/alkatra</item>
+    </style>
+
+    <style name="text19Theme">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">19dp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="fontFamily">@font/alkatra_semibold</item>
+    </style>
+
+    <style name="text21Theme">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">21dp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="fontFamily">@font/alkatra_semibold</item>
+    </style>
+
+    <style name="text29Theme">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">29dp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="fontFamily">@font/alkatra_semibold</item>
+    </style>
 </resources>

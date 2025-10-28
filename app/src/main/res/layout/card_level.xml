@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_card"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:padding="5dp">
+
+    <LinearLayout
+        android:id="@+id/card"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/played_level"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/level"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginTop="-10dp"
+            android:text="12"
+            android:theme="@style/text29Theme" />
+
+        <LinearLayout
+            android:id="@+id/layout_star"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/star_one"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:src="@drawable/star" />
+
+            <ImageView
+                android:id="@+id/star_two"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:layout_marginLeft="3dp"
+                android:layout_marginRight="3dp"
+                android:src="@drawable/star" />
+
+            <ImageView
+                android:id="@+id/star_three"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:src="@drawable/star" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
