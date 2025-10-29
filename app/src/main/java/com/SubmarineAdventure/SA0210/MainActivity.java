@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         getWindow().setStatusBarColor(getResources().getColor(R.color.trans));
-        sharedPreferences = getSharedPreferences("arineA5lA0210;", MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("arineA5lA0210", MODE_PRIVATE);
         editor = sharedPreferences.edit();
         isMute = sharedPreferences.getBoolean("isMute", false);
         soundMute = sharedPreferences.getBoolean("soundMute", false);
@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
             Player.button(soundMute);
             intent = new Intent(MainActivity.this, LevelActivity.class);
             startActivity(intent);
-            finish();
         });
 
         setting.setOnClickListener(View -> {

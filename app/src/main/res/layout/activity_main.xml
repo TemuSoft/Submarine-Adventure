@@ -124,7 +124,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="10dp"
-                    android:text="1270"
+                    android:text="Play"
                     android:theme="@style/text29Theme" />
             </LinearLayout>
 

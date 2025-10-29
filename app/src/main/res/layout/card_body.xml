@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_card"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <LinearLayout
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@drawable/blue_rect"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/defaults"
+            android:theme="@style/text19Theme" />
+
+        <TextView
+            android:id="@+id/value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-10dp"
+            android:text="+20"
+            android:theme="@style/text19Theme" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp">
+
+        <ImageView
+            android:id="@+id/rect_1"
+            android:layout_width="10dp"
+            android:layout_height="30dp"
+            android:src="@drawable/active_rect" />
+
+        <ImageView
+            android:id="@+id/rect_2"
+            android:layout_width="10dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/active_rect" />
+
+        <ImageView
+            android:id="@+id/rect_3"
+            android:layout_width="10dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/active_rect" />
+
+        <ImageView
+            android:id="@+id/rect_4"
+            android:layout_width="10dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/active_rect" />
+
+        <ImageView
+            android:id="@+id/rect_5"
+            android:layout_width="10dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/active_rect" />
+
+        <ImageView
+            android:id="@+id/rect_6"
+            android:layout_width="10dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/active_rect" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_buy"
+        android:layout_width="wrap_content"
+        android:layout_height="35dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/blue_rect"
+        android:gravity="center"
+        android:paddingLeft="7dp"
+        android:paddingRight="7dp">
+
+        <ImageView
+            android:id="@+id/coin"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/coin" />
+
+
+        <TextView
+            android:id="@+id/amount_but"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="7dp"
+            android:text="30"
+            android:theme="@style/text21Theme" />
+    </LinearLayout>
+</LinearLayout>

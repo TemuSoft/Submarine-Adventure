@@ -16,9 +16,10 @@
 
         <ImageView
             android:id="@+id/image"
+            android:scaleType="centerCrop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/body_0" />
+            android:src="@drawable/decor_0" />
     </LinearLayout>
 
 
@@ -44,6 +45,7 @@
             android:id="@+id/coin"
             android:layout_width="20dp"
             android:layout_height="20dp"
+            android:layout_marginRight="5dp"
             android:src="@drawable/coin" />
 
 

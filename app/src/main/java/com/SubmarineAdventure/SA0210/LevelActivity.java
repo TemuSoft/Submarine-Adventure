@@ -56,7 +56,7 @@ public class LevelActivity extends AppCompatActivity {
             finish();
         });
 
-        layout_alert.setVisibility(VISIBLE);
+        layout_alert.setVisibility(GONE);
         update_level_UI();
 
         layout_vertical.setOnClickListener(View -> {
@@ -117,7 +117,10 @@ public class LevelActivity extends AppCompatActivity {
                 layout_card.setOnClickListener(View -> {
                     Player.button(soundMute);
                     if (finalCounter <= lastLevelActive) {
-                        intent = new Intent(LevelActivity.this, SettingActivity.class);
+                        editor.putInt("playLevel", finalCounter);
+                        editor.apply();
+
+                        intent = new Intent(LevelActivity.this, GameActivity.class);
                         startActivity(intent);
                         finish();
                     } else {

@@ -30,10 +30,10 @@
                 android:gravity="left">
 
                 <ImageView
-                    android:id="@+id/shop"
+                    android:id="@+id/back"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:src="@drawable/shop" />
+                    android:src="@drawable/back" />
             </LinearLayout>
 
             <LinearLayout
@@ -67,27 +67,29 @@
                 android:gravity="end" />
         </LinearLayout>
 
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="30dp"
-            android:layout_weight="1">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:id="@+id/layout_vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <include layout="@layout/horizontal" />
+                android:orientation="vertical">
 
                 <include layout="@layout/horizontal" />
             </LinearLayout>
         </ScrollView>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"/>
 
     </LinearLayout>
 
@@ -99,6 +101,7 @@
         android:gravity="center"
         android:orientation="vertical"
         android:padding="10dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
