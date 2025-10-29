@@ -26,11 +26,12 @@
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="7dp"
+        android:layout_margin="5dp"
         android:text="@string/defaults"
         android:theme="@style/text19Theme" />
 
     <LinearLayout
+        android:id="@+id/layout_buy"
         android:layout_width="wrap_content"
         android:layout_height="35dp"
         android:layout_gravity="center"

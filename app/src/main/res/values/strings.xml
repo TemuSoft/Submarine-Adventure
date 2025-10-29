@@ -18,4 +18,9 @@
     <string name="decor">Decor</string>
     <string name="defaults">Default</string>
     <string name="stats">Stats</string>
+    <string name="shop">Shop</string>
+    <string name="buy">Buy</string>
+    <string name="select">Select</string>
+    <string name="selected">Selected</string>
+    <string name="reset_progress">Reset Progress</string>
 </resources>

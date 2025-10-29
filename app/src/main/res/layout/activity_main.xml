@@ -139,11 +139,11 @@
                     android:src="@drawable/setting" />
 
                 <ImageView
-                    android:id="@+id/stastistcs"
+                    android:id="@+id/statistics"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="50dp"
-                    android:src="@drawable/stastistcs" />
+                    android:src="@drawable/statistics" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
