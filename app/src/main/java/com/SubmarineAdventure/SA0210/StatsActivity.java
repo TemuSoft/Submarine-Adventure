@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class StatsActivity extends AppCompatActivity {
     private ImageView back;
     private TextView coin;
+    private Button reset_progress;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private boolean isMute, soundMute, onVibrating;
@@ -29,7 +30,7 @@ public class StatsActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         getWindow().setStatusBarColor(getResources().getColor(R.color.trans));
-        sharedPreferences = getSharedPreferences("arineA5lA0210;", MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("arineA5lA0210", MODE_PRIVATE);
         editor = sharedPreferences.edit();
         isMute = sharedPreferences.getBoolean("isMute", false);
         soundMute = sharedPreferences.getBoolean("soundMute", false);
@@ -41,10 +42,17 @@ public class StatsActivity extends AppCompatActivity {
 
         back = findViewById(R.id.back);
         coin = findViewById(R.id.coin);
+        reset_progress = findViewById(R.id.reset_progress);
 
         back.setOnClickListener(view -> {
             Player.button(soundMute);
             finish();
+        });
+
+        reset_progress.setOnClickListener(View -> {
+            Player.button(soundMute);
+
+
         });
 
         coin.setText(available_coin + "");
