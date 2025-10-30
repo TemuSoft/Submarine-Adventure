@@ -23,4 +23,8 @@
     <string name="select">Select</string>
     <string name="selected">Selected</string>
     <string name="reset_progress">Reset Progress</string>
+    <string name="achievements">Achievements</string>
+    <string name="collected">Collected</string>
+    <string name="in_progress">In Progress</string>
+    <string name="miles_traveled">Miles traveled</string>
 </resources>

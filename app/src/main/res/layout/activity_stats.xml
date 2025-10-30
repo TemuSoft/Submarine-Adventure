@@ -79,7 +79,7 @@
                     <ImageView
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:src="@drawable/coin" />
+                        android:src="@drawable/coin_icon" />
 
 
                     <TextView
@@ -102,21 +102,236 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <Space
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="180dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/blue_rect"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="7dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/miles_traveled"
+                                android:theme="@style/text19Theme" />
+
+                            <com.github.mikephil.charting.charts.LineChart
+                                android:id="@+id/lineChart"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginTop="8dp" />
+                        </LinearLayout>
+
+                        <Space
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="210dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="20dp"
+                            android:background="@drawable/blue_rect"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="7dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/collected"
+                                android:theme="@style/text19Theme" />
+
+                            <com.github.mikephil.charting.charts.BarChart
+                                android:id="@+id/barChart"
+                                android:layout_width="match_parent"
+                                android:layout_height="130dp"
+                                android:layout_marginTop="8dp" />
+
+                            <!-- Icons below bars -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="30dp"
+                                android:gravity="center"
+                                android:orientation="horizontal">
+
+                                <Space
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="0.5" />
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1">
+
+                                    <ImageView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/treasure" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1">
+
+                                    <ImageView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/pearl" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1">
+
+                                    <ImageView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/coin" />
+                                </LinearLayout>
+
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <Space
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="140dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="20dp"
+                            android:background="@drawable/blue_rect"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/achievements"
+                                android:theme="@style/text19Theme" />
+
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:id="@+id/dive"
+                                        android:layout_width="65dp"
+                                        android:layout_height="65dp"
+                                        android:background="@drawable/green_rect"
+                                        android:gravity="center"
+                                        android:padding="7dp">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:gravity="center"
+                                            android:text="dive to 5000 m"
+                                            android:textColor="@color/white"
+                                            android:textSize="11dp"
+                                            android:theme="@style/text19Theme" />
+                                    </LinearLayout>
+
+
+                                    <TextView
+                                        android:id="@+id/dive_status"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="5dp"
+                                        android:text="@string/collected"
+                                        android:textSize="12dp"
+                                        android:theme="@style/text19Theme" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="30dp"
+                                    android:gravity="center"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:id="@+id/collect_artifact"
+                                        android:layout_width="65dp"
+                                        android:layout_height="65dp"
+                                        android:background="@drawable/light_blue_rect"
+                                        android:gravity="center"
+                                        android:padding="7dp">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:gravity="center"
+                                            android:text="collect 100 artifacts"
+                                            android:textColor="@color/white"
+                                            android:textSize="11dp"
+                                            android:theme="@style/text19Theme" />
+                                    </LinearLayout>
+
+
+                                    <TextView
+                                        android:id="@+id/collect_artifact_status"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="5dp"
+                                        android:text="@string/in_progress"
+                                        android:textSize="12dp"
+                                        android:theme="@style/text19Theme" />
+                                </LinearLayout>
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <Space
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                    </LinearLayout>
+                </ScrollView>
 
             </LinearLayout>
 
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/reset_progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="100dp"
+                android:layout_height="50dp"
                 android:background="@drawable/red_btn"
                 android:text="@string/reset_progress"
                 android:textColor="@color/red"
