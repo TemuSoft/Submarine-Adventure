@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.view.View;
 
@@ -44,19 +46,23 @@ public class GameView extends View {
     int sub_x, sub_y, sub_w, sub_h;
     int move_left, move_up;
     int active_decor;
+    float sub_angle = 0;
     String image_uri;
     ArrayList<ArrayList<Integer>> wh = new ArrayList<>();
     ArrayList<Bitmap> bitmaps = new ArrayList<>();
     ArrayList<ArrayList<Integer>> game_data = new ArrayList<>();
-    ArrayList<ArrayList<Long>> shark_data = new ArrayList<>();
-
+    ArrayList<ArrayList<Long>> game_data_two = new ArrayList<>();
+    int depth = 100, time = 1000 * 60 * 3;
+    int depth_gap = 15, time_gap = 1000 * 10;
+    int playLevel;
+    int min_x, min_y, max_x, max_y, padding;
 
     int joystick_radius, joystick_x, joystick_y;
     int move_w_h, move_x, move_y;
     boolean joystick_on_hold = false;
     float knob_x, knob_y;
     float last_dx = 0, last_dy = 0;
-    float rat_angle = 0;
+    int x_distance, y_distance;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -65,10 +71,18 @@ public class GameView extends View {
         resources = res;
         context = mContext;
         random = new Random();
+        padding = screenX / 2;
+        min_x = -padding;
+        min_y = -padding;
+        max_x = screenX + padding;
+        max_y = screenY + padding;
+        depth = depth + depth_gap * playLevel;
+        time = time + time_gap * playLevel;
 
         sharedPreferences = context.getSharedPreferences("arineA5lA0210", context.MODE_PRIVATE);
         active_decor = sharedPreferences.getInt("active_decor", 0);
         image_uri = sharedPreferences.getString("image_uri", "");
+        playLevel = sharedPreferences.getInt("playLevel", 1);
 
         initialize_data(res);
         setSpeed();
@@ -80,8 +94,8 @@ public class GameView extends View {
         int index = random.nextInt(bitmaps.size());
         int w = wh.get(index).get(0);
         int h = wh.get(index).get(1);
-        int x = random.nextInt(screenX - w);
-        int y = random.nextInt(screenY - h);
+        int x = random.nextInt(max_x - min_x - w);
+        int y = random.nextInt(max_y - min_y - h);
         long angel = 0;
         long time = System.currentTimeMillis();
         long gap = shark_main_update_gap + random.nextInt(shark_main_update_gap);
@@ -104,11 +118,12 @@ public class GameView extends View {
             }
         }
 
-        for (int i = 0; i < shark_data.size(); i++) {
-            int xx = Math.toIntExact(shark_data.get(i).get(0));
-            int yy = Math.toIntExact(shark_data.get(i).get(1));
-            int ww = wh.get(SHARK_VALUE).get(0);
-            int hh = wh.get(SHARK_VALUE).get(1);
+        for (int i = 0; i < game_data_two.size(); i++) {
+            int xx = Math.toIntExact(game_data_two.get(i).get(0));
+            int yy = Math.toIntExact(game_data_two.get(i).get(1));
+            int indexx = Math.toIntExact(game_data_two.get(i).get(2));
+            int ww = wh.get(indexx).get(0);
+            int hh = wh.get(indexx).get(1);
 
             Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
             if (Rect.intersects(rect, rect1)) {
@@ -117,23 +132,24 @@ public class GameView extends View {
             }
         }
 
-        if (Rect.intersects(rect, getSubmarineCollision())) has_intersection = true;
+        if (path_object_intersection(getSubArea(), rect)) has_intersection = true;
 
         if (Rect.intersects(rect, getJoystickArea())) has_intersection = true;
 
         if (has_intersection) {
             add_bitmap();
-        } else if (index == SHARK_VALUE) {
+        } else if (index == SHARK_VALUE || index == JELLY_VALUE) {
             ArrayList<Long> data = new ArrayList<>();
             data.add((long) x);
             data.add((long) y);
+            data.add((long) index);
             data.add(angel);
             data.add(time);
             data.add(gap);
             data.add(x_speed);
             data.add(y_speed);
-            shark_data.add(data);
-            update_cat_direction(shark_data.size() - 1);
+            game_data_two.add(data);
+            update_cat_direction(game_data_two.size() - 1);
         } else {
             ArrayList<Integer> data = new ArrayList<>();
             data.add(x);
@@ -144,17 +160,18 @@ public class GameView extends View {
     }
 
     private void update_cat_direction(int i) {
-        ArrayList<Long> data = shark_data.get(i);
+        ArrayList<Long> data = game_data_two.get(i);
         long x = data.get(0);
         long y = data.get(1);
-        long angle = data.get(2);
-        long time = data.get(3);
-        long gap = data.get(4);
-        long x_speed = data.get(5);
-        long y_speed = data.get(6);
+        long index = data.get(2);
+        long angle = data.get(3);
+        long time = data.get(4);
+        long gap = data.get(5);
+        long x_speed = data.get(6);
+        long y_speed = data.get(7);
 
-        shark_data.get(i).set(3, System.currentTimeMillis());
-        shark_data.get(i).set(4, (long) (shark_main_update_gap + random.nextInt(shark_main_update_gap)));
+        game_data_two.get(i).set(4, System.currentTimeMillis());
+        game_data_two.get(i).set(5, (long) (shark_main_update_gap + random.nextInt(shark_main_update_gap)));
 
         float dx = sub_x - x;
         float dy = sub_y - y;
@@ -162,15 +179,15 @@ public class GameView extends View {
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
         // Always update angle
-        shark_data.get(i).set(2, (long) Math.toDegrees(Math.atan2(dy, dx)));
+        game_data_two.get(i).set(3, (long) Math.toDegrees(Math.atan2(dy, dx)));
 
         if (distance > 0) {
             float normalizedX = dx / distance;
             float normalizedY = dy / distance;
 
             // Set movement speed
-            shark_data.get(i).set(5, (long) (normalizedX * xSpeed * 2 / 5));
-            shark_data.get(i).set(6, (long) (normalizedY * ySpeed * 2 / 5));
+            game_data_two.get(i).set(6, (long) (normalizedX * xSpeed * 2 / 5));
+            game_data_two.get(i).set(7, (long) (normalizedY * ySpeed * 2 / 5));
         }
     }
 
@@ -304,18 +321,24 @@ public class GameView extends View {
         paint.setColor(getResources().getColor(R.color.dark_blue));
         canvas.drawCircle(knob_x, knob_y, joystick_radius / 2, paint);
 
-        for (int i = 0; i < shark_data.size(); i++) {
-            long x = shark_data.get(i).get(0);
-            long y = shark_data.get(i).get(1);
-            long angle = shark_data.get(i).get(2);
-            long time = shark_data.get(i).get(3);
-            long gap = shark_data.get(i).get(4);
-            long x_speed = shark_data.get(i).get(5);
-            long y_speed = shark_data.get(i).get(6);
+        for (int i = 0; i < game_data_two.size(); i++) {
+            ArrayList<Long> data = game_data_two.get(i);
+            long x = data.get(0);
+            long y = data.get(1);
+            long index = data.get(2);
+            long angle = data.get(3);
+            long time = data.get(4);
+            long gap = data.get(5);
+            long x_speed = data.get(6);
+            long y_speed = data.get(7);
+            int w = bitmaps.get((int) index).getWidth();
+            int h = bitmaps.get((int) index).getHeight();
+
+            if (index == JELLY_VALUE) angle = 0;
 
             canvas.save();
-            canvas.rotate(angle, x + sha_w / 2f, y + sha_h / 2f);
-            canvas.drawBitmap(bitmaps.get(SHARK_VALUE), x, y, paint);
+            canvas.rotate(angle, x + w / 2f, y + h / 2f);
+            canvas.drawBitmap(bitmaps.get((int) index), x, y, paint);
             canvas.restore();
         }
 
@@ -342,16 +365,58 @@ public class GameView extends View {
     }
 
     public void update() {
-        for (int i = 0; i < shark_data.size(); i++) {
-            long x = shark_data.get(i).get(0);
-            long y = shark_data.get(i).get(1);
-            long angle = shark_data.get(i).get(2);
-            long time = shark_data.get(i).get(3);
-            long gap = shark_data.get(i).get(4);
-            long x_speed = shark_data.get(i).get(5);
-            long y_speed = shark_data.get(i).get(6);
+        if (joystick_on_hold) {
+            float dx = knob_x - (joystick_x + joystick_radius);
+            float dy = knob_y - (joystick_y + joystick_radius);
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > joystick_radius * 0.2f) {
+                float movementAngle = (float) Math.atan2(dy, dx);
+                sub_angle = (float) Math.toDegrees(movementAngle); // for drawing
+
+                // Move in the direction of movementAngle (not angle)
+                int x_speed = (int) (Math.cos(movementAngle) * xSpeed);
+                int y_speed = (int) Math.sin(movementAngle) * ySpeed;
+                sub_x += x_speed;
+                sub_y += y_speed;
+                x_distance += xSpeed;
+                y_distance += y_distance;
+
+                move_left = Integer.compare(x_speed, 0);
+                move_up = Integer.compare(y_speed, 0);
+
+                // Clamp to screen
+                sub_x = Math.max(0, Math.min(sub_x, screenX - sub_w));
+                sub_y = Math.max(0, Math.min(sub_y, screenY - sub_h));
+            }
         }
 
+        for (int i = 0; i < game_data_two.size(); i++) {
+            ArrayList<Long> data = game_data_two.get(i);
+            long x = data.get(0);
+            long y = data.get(1);
+            long index = data.get(2);
+            long angle = data.get(3);
+            long time = data.get(4);
+            long gap = data.get(5);
+            long x_speed = data.get(6);
+            long y_speed = data.get(7);
+
+            x += xSpeed * move_left + x_speed;
+            y += ySpeed * move_up + y_speed;
+            game_data_two.get(i).set(0, x);
+            game_data_two.get(i).set(1, y);
+
+            if (x < min_x || x > max_x - bitmaps.get((int) index).getWidth()) {
+                add_bitmap();
+                break;
+            }
+
+            if (y < min_y || y > max_y - bitmaps.get((int) index).getWidth()) {
+                add_bitmap();
+                break;
+            }
+        }
 
         for (int i = 0; i < game_data.size(); i++) {
             int x = game_data.get(i).get(0);
@@ -359,11 +424,73 @@ public class GameView extends View {
             int index = game_data.get(i).get(2);
             int w = wh.get(index).get(0);
             int h = wh.get(index).get(1);
+
+            x += xSpeed * move_left;
+            y += ySpeed * move_up;
+            game_data.get(i).set(0, x);
+            game_data.get(i).set(1, y);
+
+            if (x < min_x || x > max_x - w) {
+                add_bitmap();
+                break;
+            }
+
+            if (y < min_y || y > max_y - h) {
+                add_bitmap();
+                break;
+            }
+        }
+
+        check_collision();
+        double distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
+        if (distance >= depth) {
+            game_won = true;
+            game_won_time = System.currentTimeMillis();
+        }
+
+        if (time < System.currentTimeMillis() - game_start_time || oxygen_remain <= 0 || health_remain <= 0) {
+            game_over = true;
+            game_over_time = System.currentTimeMillis();
         }
 
         invalidate();
     }
 
+    private void check_collision() {
+        Path path = getSubArea();
+        for (int i = 0; i < game_data_two.size(); i++) {
+            ArrayList<Long> data = game_data_two.get(i);
+            long x = data.get(0);
+            long y = data.get(1);
+            long index = data.get(2);
+            long angle = data.get(3);
+            long time = data.get(4);
+            long gap = data.get(5);
+            long x_speed = data.get(6);
+            long y_speed = data.get(7);
+
+            int ww = wh.get((int) index).get(0);
+            int hh = wh.get((int) index).get(1);
+
+            Rect rect1 = new Rect((int) x, (int) y, (int) (x + ww), (int) (y + hh));
+            if (path_object_intersection(path, rect1)) {
+
+            }
+        }
+
+        for (int i = 0; i < game_data.size(); i++) {
+            int x = game_data.get(i).get(0);
+            int y = game_data.get(i).get(1);
+            int index = game_data.get(i).get(2);
+            int w = wh.get(index).get(0);
+            int h = wh.get(index).get(1);
+
+            Rect rect1 = new Rect(x, y, x + w, y + h);
+            if (path_object_intersection(path, rect1)) {
+
+            }
+        }
+    }
 
     public Rect getKnobCollision() {
         int r = joystick_radius / 2;
@@ -373,11 +500,66 @@ public class GameView extends View {
     public Rect getJoystickArea() {
         return new Rect(joystick_x, joystick_y, joystick_x + joystick_radius * 2, joystick_y + joystick_radius * 2);
     }
+//
+//    public Rect getSubmarineCollision() {
+//        int mw = sub_w / 6;
+//        int mh = sub_h / 6;
+//
+//        return new Rect(sub_x + mw, sub_y + mh, sub_x + sub_w - mw, sub_y + sub_h - mh);
+//    }
 
-    public Rect getSubmarineCollision() {
+    public Path getSubArea() {
         int mw = sub_w / 6;
         int mh = sub_h / 6;
 
-        return new Rect(sub_x + mw, sub_y + mh, sub_x + sub_w - mw, sub_y + sub_h - mh);
+        int[] xy0 = xyPrimePoint(sub_x + mw, sub_y + mh, (int) sub_angle, sub_x + sub_w / 2, sub_y + sub_h / 2);
+        int[] xy1 = xyPrimePoint(sub_x - mw + sub_w, sub_y + mh, (int) sub_angle, sub_x + sub_w / 2, sub_y + sub_h / 2);
+        int[] xy2 = xyPrimePoint(sub_x - mw + sub_w, sub_y - mh + sub_h, (int) sub_angle, sub_x + sub_w / 2, sub_y + sub_h / 2);
+        int[] xy3 = xyPrimePoint(sub_x + mw, sub_y + sub_h - mh, (int) sub_angle, sub_x + sub_w / 2, sub_y + sub_h / 2);
+        Path path = new Path();
+        path.moveTo(xy0[0], xy0[1]);
+        path.lineTo(xy1[0], xy1[1]);
+        path.lineTo(xy2[0], xy2[1]);
+        path.lineTo(xy3[0], xy3[1]);
+
+        return path;
+    }
+
+
+    private boolean path_object_intersection(Path path, Rect object) {
+        boolean path_object_intersection = false;
+        PathMeasure pm = new PathMeasure(path, false);
+        float distance = 0f;
+        float speed = pm.getLength() / 10;
+        float[] aCoordinates = new float[2];
+
+        while (distance < pm.getLength()) {
+            pm.getPosTan(distance, aCoordinates, null);
+            int xc = (int) aCoordinates[0];
+            int yc = (int) aCoordinates[1];
+
+            Rect rect = new Rect(xc, yc, xc, yc);
+            if (Rect.intersects(rect, object)) {
+                path_object_intersection = true;
+                break;
+            }
+            distance = distance + speed;
+        }
+
+        return path_object_intersection;
+    }
+
+    public int[] xyPrimePoint(int x, int y, int angle, int cx, int cy) {
+        double radians = Math.toRadians(angle);
+
+        int x1 = x - cx;
+        int y1 = y - cy;
+        int x2 = (int) (x1 * Math.cos(radians) - y1 * Math.sin(radians));
+        int y2 = (int) (x1 * Math.sin(radians) + y1 * Math.cos(radians));
+
+        x = x2 + cx;
+        y = y2 + cy;
+
+        return new int[]{x, y};
     }
 }
