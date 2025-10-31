@@ -19,6 +19,7 @@
         android:orientation="vertical">
 
         <LinearLayout
+            android:elevation="4dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center">
@@ -70,7 +71,7 @@
         <Space
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1" />
 
         <ScrollView
             android:layout_width="match_parent"
@@ -89,45 +90,47 @@
         <Space
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="2"/>
+            android:layout_weight="2" />
 
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layout_alert"
-        android:layout_width="150dp"
-        android:layout_height="100dp"
-        android:background="@drawable/blue_rect"
+        android:elevation="2dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center"
-        android:orientation="vertical"
-        android:padding="10dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.6">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/alert_level"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Level 20"
-            android:theme="@style/text19Theme" />
-
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/alert_previous"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <LinearLayout
+            android:layout_width="150dp"
+            android:layout_height="100dp"
+            android:background="@drawable/blue_rect"
             android:gravity="center"
-            android:lineSpacingExtra="0dp"
-            android:lineSpacingMultiplier="0.7"
-            android:text="Level 19 needed to open"
-            android:theme="@style/text14Theme" />
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/alert_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Level 20"
+                android:theme="@style/text19Theme" />
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/alert_previous"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:lineSpacingExtra="0dp"
+                android:lineSpacingMultiplier="0.7"
+                android:text="Level 19 needed to open"
+                android:theme="@style/text14Theme" />
+        </LinearLayout>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

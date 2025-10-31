@@ -1,5 +1,7 @@
 package com.SubmarineAdventure.SA0210;
 
+import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
 import android.content.Context;
@@ -33,8 +35,8 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     private LinearLayout layout_canvas, layout_main, layout_pause_over;
 
     private ImageView back, shop;
-    private TextView active_level, all_coin, status, game_coin, button_text;
-    private LinearLayout next_again;
+    private TextView active_level, all_coin, status, game_coin, button_text, next_opened;
+    private LinearLayout next_again, layout_coin;
 
     private LayoutInflater inflate;
     private SharedPreferences sharedPreferences;
@@ -46,6 +48,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     private Random random;
     private Handler handler;
     private GameView gameView;
+    private int available_coin, last_game_played;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +59,8 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         isMute = sharedPreferences.getBoolean("isMute", false);
         soundMute = sharedPreferences.getBoolean("soundMute", false);
         lang = sharedPreferences.getString("lang", "");
+        available_coin = sharedPreferences.getInt("available_coin", 0);
+        last_game_played = sharedPreferences.getInt("last_game_played", 0);
 
         setContentView(R.layout.activity_game);
 
@@ -76,6 +81,8 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         status = findViewById(R.id.status);
         button_text = findViewById(R.id.button_text);
         next_again = findViewById(R.id.next_again);
+        layout_coin = findViewById(R.id.layout_coin);
+        next_opened = findViewById(R.id.next_opened);
 
         layout_canvas = findViewById(R.id.layout_canvas);
         layout_main = findViewById(R.id.layout_main);
@@ -85,6 +92,17 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         pause.setOnClickListener(view -> {
             Player.button(soundMute);
             pauseDialog();
+        });
+
+        back.setOnClickListener(View -> {
+            Player.button(soundMute);
+            finish();
+        });
+
+        shop.setOnClickListener(view -> {
+            Player.button(soundMute);
+            intent = new Intent(GameActivity.this, ShopActivity.class);
+            startActivity(intent);
         });
 
         layout_canvas.removeAllViews();
@@ -98,6 +116,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         layout_canvas.addView(gameView);
 
         layout_canvas.setOnTouchListener(this);
+
+        active_level.setText(getResources().getString(R.string.level) + " " + gameView.playLevel);
+        all_coin.setText(available_coin + "");
     }
 
 
@@ -127,21 +148,90 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
     public void pauseDialog() {
         gameView.isPlaying = false;
+        layout_main.setVisibility(GONE);
+        layout_canvas.setVisibility(INVISIBLE);
         layout_pause_over.setVisibility(VISIBLE);
 
+        game_coin.setText("+" + gameView.coin_amount);
+        status.setText(getResources().getString(R.string.game_paused));
+        button_text.setText(getResources().getString(R.string.resume));
+        next_again.setOnClickListener(View -> {
+            Player.button(soundMute);
+
+            gameView.isPlaying = true;
+            layout_main.setVisibility(VISIBLE);
+            layout_canvas.setVisibility(VISIBLE);
+            layout_pause_over.setVisibility(GONE);
+
+            reloading_UI();
+        });
+        next_opened.setVisibility(INVISIBLE);
+        layout_coin.setVisibility(INVISIBLE);
     }
 
 
     private void game_over() {
         gameView.isPlaying = false;
+        layout_main.setVisibility(GONE);
+        layout_canvas.setVisibility(INVISIBLE);
         layout_pause_over.setVisibility(VISIBLE);
+        gameView.coin_amount = 0;
 
+        game_coin.setText("+" + gameView.coin_amount);
+        status.setText(getResources().getString(R.string.level_failed));
+        button_text.setText(getResources().getString(R.string.play_again));
+        next_again.setOnClickListener(View -> {
+            Player.button(soundMute);
+
+            intent = new Intent(GameActivity.this, GameActivity.class);
+            startActivity(intent);
+            finish();
+        });
+        next_opened.setVisibility(INVISIBLE);
+        layout_coin.setVisibility(VISIBLE);
     }
 
     private void game_won() {
         gameView.isPlaying = false;
+        layout_main.setVisibility(GONE);
+        layout_canvas.setVisibility(INVISIBLE);
         layout_pause_over.setVisibility(VISIBLE);
 
+        if (gameView.playLevel == 35) {
+            next_again.setAlpha(0.3F);
+            next_again.setEnabled(false);
+            next_opened.setVisibility(INVISIBLE);
+        }else {
+            next_opened.setText("Level " + (gameView.playLevel + 1) + " is now Opened");
+            next_opened.setVisibility(VISIBLE);
+        }
+
+        gameView.playLevel++;
+        if (gameView.playLevel > 35) gameView.playLevel = 35;
+        if (gameView.lastLevelActive < gameView.playLevel) {
+            gameView.lastLevelActive = gameView.playLevel;
+        }
+        editor.putInt("whole_distance_" + last_game_played, (int) gameView.whole_distance);
+        editor.putInt("last_game_played", last_game_played + 1);
+        editor.putInt("playLevel", gameView.playLevel);
+        editor.putInt("lastLevelActive", gameView.lastLevelActive);
+        editor.putInt("available_coin", available_coin + gameView.coin_amount);
+        editor.putInt("pearl_amount", sharedPreferences.getInt("pearl_amount", 0) + gameView.pearl_amount);
+        editor.putInt("treasure_amount", sharedPreferences.getInt("treasure_amount", 0) + gameView.treasure_amount);
+        editor.putInt("coin_amount", sharedPreferences.getInt("coin_amount", 0) + gameView.coin_amount);
+        editor.apply();
+
+        game_coin.setText("+" + gameView.coin_amount);
+        status.setText(getResources().getString(R.string.level_completed));
+        button_text.setText(getResources().getString(R.string.next_level));
+        next_again.setOnClickListener(View -> {
+            Player.button(soundMute);
+
+            intent = new Intent(GameActivity.this, GameActivity.class);
+            startActivity(intent);
+            finish();
+        });
+        layout_coin.setVisibility(VISIBLE);
     }
 
     @Override
@@ -149,8 +239,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         super.onPause();
         gameView.isPlaying = false;
         gameView.game_pause_time = System.currentTimeMillis();
-        if (!isMute)
-            Player.all_screens.pause();
+        if (!isMute) Player.all_screens.pause();
     }
 
     @Override
@@ -165,8 +254,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         }
         reloading_UI();
 
-        if (!isMute)
-            Player.all_screens.start();
+        if (!isMute) Player.all_screens.start();
     }
 
     @Override
@@ -207,6 +295,8 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         gameView.knob_y = gameView.joystick_y + gameView.joystick_radius;
         gameView.last_dx = 0;
         gameView.last_dy = 0;
+        gameView.move_left = 0;
+        gameView.move_up = 0;
     }
 
 

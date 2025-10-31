@@ -59,7 +59,7 @@ public class LevelActivity extends AppCompatActivity {
         layout_alert.setVisibility(GONE);
         update_level_UI();
 
-        layout_vertical.setOnClickListener(View -> {
+        layout_alert.setOnClickListener(View -> {
             Player.button(soundMute);
             layout_alert.setVisibility(GONE);
         });

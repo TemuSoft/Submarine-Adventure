@@ -27,4 +27,6 @@
     <string name="collected">Collected</string>
     <string name="in_progress">In Progress</string>
     <string name="miles_traveled">Miles traveled</string>
+    <string name="resume">Resume</string>
+    <string name="game_paused">Game Paused</string>
 </resources>

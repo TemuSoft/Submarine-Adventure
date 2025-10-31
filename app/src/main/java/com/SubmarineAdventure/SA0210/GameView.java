@@ -25,12 +25,15 @@ public class GameView extends View {
     private Resources resources;
     private Random random;
     boolean isPlaying = true;
-    boolean game_over, game_won;
+    boolean game_over, game_won, jelly_touched;
     long game_start_time = System.currentTimeMillis(), game_pause_time;
-    int shark_main_update_gap = 1500;
-    long game_over_time, game_won_time;
+    int shark_main_update_gap = 1500, jelly_duration = 1500;
+    long game_over_time, game_won_time, jelly_touched_time;
+    int deduction_gap = 900;
+    float oxygen_health_deduction = 0.5f;
+    long oxygen_health_last_time = System.currentTimeMillis();
 
-    int score;
+
     private int xSpeed, ySpeed;
     private Context context;
 
@@ -54,7 +57,7 @@ public class GameView extends View {
     ArrayList<ArrayList<Long>> game_data_two = new ArrayList<>();
     int depth = 100, time = 1000 * 60 * 3;
     int depth_gap = 15, time_gap = 1000 * 10;
-    int playLevel;
+    int playLevel, lastLevelActive;
     int min_x, min_y, max_x, max_y, padding;
 
     int joystick_radius, joystick_x, joystick_y;
@@ -63,6 +66,8 @@ public class GameView extends View {
     float knob_x, knob_y;
     float last_dx = 0, last_dy = 0;
     int x_distance, y_distance;
+    int pearl_amount, treasure_amount, coin_amount;
+    double whole_distance = 0;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -71,7 +76,7 @@ public class GameView extends View {
         resources = res;
         context = mContext;
         random = new Random();
-        padding = screenX / 2;
+        padding = screenX / 4;
         min_x = -padding;
         min_y = -padding;
         max_x = screenX + padding;
@@ -83,11 +88,12 @@ public class GameView extends View {
         active_decor = sharedPreferences.getInt("active_decor", 0);
         image_uri = sharedPreferences.getString("image_uri", "");
         playLevel = sharedPreferences.getInt("playLevel", 1);
+        lastLevelActive = sharedPreferences.getInt("lastLevelActive", 1);
 
         initialize_data(res);
         setSpeed();
         for (int i = 0; i < 10; i++)
-            if (random.nextBoolean() || i < 6) add_bitmap();
+            if (random.nextBoolean() || i < 7) add_bitmap();
     }
 
     private void add_bitmap() {
@@ -149,7 +155,7 @@ public class GameView extends View {
             data.add(x_speed);
             data.add(y_speed);
             game_data_two.add(data);
-            update_cat_direction(game_data_two.size() - 1);
+            update_direction(game_data_two.size() - 1);
         } else {
             ArrayList<Integer> data = new ArrayList<>();
             data.add(x);
@@ -159,7 +165,7 @@ public class GameView extends View {
         }
     }
 
-    private void update_cat_direction(int i) {
+    private void update_direction(int i) {
         ArrayList<Long> data = game_data_two.get(i);
         long x = data.get(0);
         long y = data.get(1);
@@ -223,62 +229,62 @@ public class GameView extends View {
 
         data = new ArrayList<>();
         tr_w = treasure.getWidth() * scale_per_100 / 100;
-        tr_h = treasure.getWidth() * scale_per_100 / 100;
+        tr_h = treasure.getHeight() * scale_per_100 / 100;
         data.add(tr_w);
         data.add(tr_h);
         wh.add(data);
 
         data = new ArrayList<>();
         co_w = coin.getWidth() * scale_per_100 / 100;
-        co_h = coin.getWidth() * scale_per_100 / 100;
+        co_h = coin.getHeight() * scale_per_100 / 100;
         data.add(co_w);
         data.add(co_h);
         wh.add(data);
 
         data = new ArrayList<>();
         shi_w = shimmer.getWidth() * scale_per_100 / 100;
-        shi_h = shimmer.getWidth() * scale_per_100 / 100;
+        shi_h = shimmer.getHeight() * scale_per_100 / 100;
         data.add(shi_w);
         data.add(shi_h);
         wh.add(data);
 
         data = new ArrayList<>();
         ox_w = oxygen.getWidth() * scale_per_100 / 100;
-        ox_h = oxygen.getWidth() * scale_per_100 / 100;
+        ox_h = oxygen.getHeight() * scale_per_100 / 100;
         data.add(ox_w);
         data.add(ox_h);
         wh.add(data);
 
         data = new ArrayList<>();
         je_w = jelly.getWidth() * scale_per_100 / 100;
-        je_h = jelly.getWidth() * scale_per_100 / 100;
+        je_h = jelly.getHeight() * scale_per_100 / 100;
         data.add(je_w);
         data.add(je_h);
         wh.add(data);
 
         data = new ArrayList<>();
         sha_w = shark.getWidth() * scale_per_100 / 100;
-        sha_h = shark.getWidth() * scale_per_100 / 100;
+        sha_h = shark.getHeight() * scale_per_100 / 100;
         data.add(sha_w);
         data.add(sha_h);
         wh.add(data);
 
         data = new ArrayList<>();
         de_w = death.getWidth();
-        de_h = death.getWidth();
+        de_h = death.getHeight();
         data.add(de_w);
         data.add(de_h);
         wh.add(data);
 
         data = new ArrayList<>();
-        sub_w = submarine.getWidth() * scale_per_100 / 100;
-        sub_h = submarine.getWidth() * scale_per_100 / 100;
+        sub_w = submarine.getWidth();
+        sub_h = submarine.getHeight();
         data.add(sub_w);
         data.add(sub_h);
         wh.add(data);
 
-        sub_x = random.nextInt(screenX - sub_w * 5) + sub_w * 2;
-        sub_y = random.nextInt(screenX - sub_h * 7) + sub_h * 2;
+        sub_x = screenX * 2 / 5 + random.nextInt(screenX / 5);
+        sub_y = screenY * 2 / 5 + random.nextInt(screenY / 5);
 
         pearl = Bitmap.createScaledBitmap(pearl, pr_w, pr_h, false);
         treasure = Bitmap.createScaledBitmap(treasure, tr_w, tr_h, false);
@@ -334,6 +340,8 @@ public class GameView extends View {
             int w = bitmaps.get((int) index).getWidth();
             int h = bitmaps.get((int) index).getHeight();
 
+            if (x < 0 || x > screenX - w || y < 0 || y > screenY - h) continue;
+
             if (index == JELLY_VALUE) angle = 0;
 
             canvas.save();
@@ -349,14 +357,22 @@ public class GameView extends View {
             int w = wh.get(index).get(0);
             int h = wh.get(index).get(1);
 
+            if (x < 0 || x > screenX - w || y < 0 || y > screenY - h) continue;
+
             canvas.drawBitmap(bitmaps.get(index), x, y, paint);
         }
 
         canvas.save();
-        canvas.scale(move_left, 1, sub_x + sub_w / 2, sub_y + sub_h / 2);
+        int vv = move_left == 0 ? 1 : move_left;
+        canvas.scale(vv, 1, sub_x + sub_w / 2, sub_y + sub_h / 2);
         canvas.drawBitmap(submarine, sub_x, sub_y, paint);
         canvas.restore();
 
+        if (game_over){
+            int x = sub_x + sub_w / 2 - de_w / 2;
+            int y = sub_y + sub_h / 2 - de_h / 2;
+            canvas.drawBitmap(death, x, y, paint);
+        }
     }
 
     private void setSpeed() {
@@ -377,13 +393,19 @@ public class GameView extends View {
                 // Move in the direction of movementAngle (not angle)
                 int x_speed = (int) (Math.cos(movementAngle) * xSpeed);
                 int y_speed = (int) Math.sin(movementAngle) * ySpeed;
+
+                move_left = Integer.compare(x_speed, 0);
+                move_up = Integer.compare(y_speed, 0);
+
+                if (jelly_touched){
+                    x_speed = x_speed * 2 / 3;
+                    y_speed = y_speed * 2 / 3;
+                }
+
                 sub_x += x_speed;
                 sub_y += y_speed;
                 x_distance += xSpeed;
                 y_distance += y_distance;
-
-                move_left = Integer.compare(x_speed, 0);
-                move_up = Integer.compare(y_speed, 0);
 
                 // Clamp to screen
                 sub_x = Math.max(0, Math.min(sub_x, screenX - sub_w));
@@ -406,13 +428,22 @@ public class GameView extends View {
             y += ySpeed * move_up + y_speed;
             game_data_two.get(i).set(0, x);
             game_data_two.get(i).set(1, y);
+        }
+
+        for (int i = 0; i < game_data_two.size(); i++) {
+            ArrayList<Long> data = game_data_two.get(i);
+            long x = data.get(0);
+            long y = data.get(1);
+            long index = data.get(2);
 
             if (x < min_x || x > max_x - bitmaps.get((int) index).getWidth()) {
+                game_data_two.remove(i);
                 add_bitmap();
                 break;
             }
 
             if (y < min_y || y > max_y - bitmaps.get((int) index).getWidth()) {
+                game_data_two.remove(i);
                 add_bitmap();
                 break;
             }
@@ -429,21 +460,31 @@ public class GameView extends View {
             y += ySpeed * move_up;
             game_data.get(i).set(0, x);
             game_data.get(i).set(1, y);
+        }
+
+        for (int i = 0; i < game_data.size(); i++) {
+            int x = game_data.get(i).get(0);
+            int y = game_data.get(i).get(1);
+            int index = game_data.get(i).get(2);
+            int w = wh.get(index).get(0);
+            int h = wh.get(index).get(1);
 
             if (x < min_x || x > max_x - w) {
+                game_data.remove(i);
                 add_bitmap();
                 break;
             }
 
             if (y < min_y || y > max_y - h) {
+                game_data.remove(i);
                 add_bitmap();
                 break;
             }
         }
 
         check_collision();
-        double distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
-        if (distance >= depth) {
+        whole_distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
+        if (whole_distance >= depth) {
             game_won = true;
             game_won_time = System.currentTimeMillis();
         }
@@ -451,6 +492,22 @@ public class GameView extends View {
         if (time < System.currentTimeMillis() - game_start_time || oxygen_remain <= 0 || health_remain <= 0) {
             game_over = true;
             game_over_time = System.currentTimeMillis();
+        }
+
+        if (jelly_touched){
+            if (jelly_touched_time + jelly_duration < System.currentTimeMillis()){
+                jelly_touched_time = 0;
+                jelly_touched = false;
+            }
+        }
+
+        if (oxygen_health_last_time + deduction_gap < System.currentTimeMillis()){
+            oxygen_health_last_time = System.currentTimeMillis();
+            oxygen_remain -= oxygen_health_deduction;
+            health_remain -= oxygen_health_deduction;
+
+            if (oxygen_remain < 0) oxygen_remain = 0;
+            if (health_remain < 0) health_remain = 0;
         }
 
         invalidate();
@@ -474,7 +531,19 @@ public class GameView extends View {
 
             Rect rect1 = new Rect((int) x, (int) y, (int) (x + ww), (int) (y + hh));
             if (path_object_intersection(path, rect1)) {
-
+                if (index == JELLY_VALUE) {
+                    health_remain -= 2;
+                    jelly_touched_time = System.currentTimeMillis();
+                    jelly_touched = true;
+                    game_data_two.remove(i);
+                    add_bitmap();
+                    break;
+                } else if (index == SHARK_VALUE) {
+                    health_remain -= 5;
+                    game_data_two.remove(i);
+                    add_bitmap();
+                    break;
+                }
             }
         }
 
@@ -487,7 +556,35 @@ public class GameView extends View {
 
             Rect rect1 = new Rect(x, y, x + w, y + h);
             if (path_object_intersection(path, rect1)) {
-
+                if (index == PEARL_VALUE) {
+                    pearl_amount++;
+                    game_data.remove(i);
+                    add_bitmap();
+                    break;
+                } else if (index == TREASURE_VALUE) {
+                    treasure_amount++;
+                    game_data.remove(i);
+                    add_bitmap();
+                    break;
+                } else if (index == COIN_VALUE) {
+                    coin_amount++;
+                    game_data.remove(i);
+                    add_bitmap();
+                    break;
+                } else if (index == SHIMMER_VALUE) {
+                    // do nothing for now
+                    health_remain += 5;
+                    if (health_remain > 100) health_remain = 100;
+                    game_data.remove(i);
+                    add_bitmap();
+                    break;
+                } else if (index == OXYGEN_VALUE) {
+                    oxygen_remain += 5;
+                    if (oxygen_remain > 100) oxygen_remain = 100;
+                    game_data.remove(i);
+                    add_bitmap();
+                    break;
+                }
             }
         }
     }

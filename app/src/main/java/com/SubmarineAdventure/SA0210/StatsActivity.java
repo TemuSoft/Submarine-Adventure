@@ -2,7 +2,6 @@ package com.SubmarineAdventure.SA0210;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -14,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
@@ -25,7 +23,6 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 public class StatsActivity extends AppCompatActivity {
     private LinearLayout collect_artifact, dive;
@@ -62,16 +59,11 @@ public class StatsActivity extends AppCompatActivity {
         lang = sharedPreferences.getString("lang", "");
         available_coin = sharedPreferences.getInt("available_coin", 0);
         dive_500m_achieved = sharedPreferences.getBoolean("dive_500m_achieved", false);
-        total_artifact_collected = sharedPreferences.getInt("total_artifact_collected", 0);
         distance_traveled = sharedPreferences.getInt("distance_traveled", 0);
         treasure_amount = sharedPreferences.getInt("treasure_amount", 0);
         pearl_amount = sharedPreferences.getInt("pearl_amount", 0);
         coin_amount = sharedPreferences.getInt("coin_amount", 0);
         shimmer_amount = sharedPreferences.getInt("shimmer_amount", 0);
-
-        treasure_amount = new Random().nextInt(50);
-        pearl_amount = new Random().nextInt(50);
-        coin_amount = new Random().nextInt(50);
 
         setContentView(R.layout.activity_stats);
 
@@ -122,6 +114,7 @@ public class StatsActivity extends AppCompatActivity {
             dive_status.setText(getResources().getString(R.string.in_progress));
         }
 
+        total_artifact_collected = pearl_amount + treasure_amount;
         if (total_artifact_collected >= 100) {
             collect_artifact.setBackgroundResource(R.drawable.green_rect);
             collect_artifact_status.setText(getResources().getString(R.string.collected));
@@ -133,19 +126,36 @@ public class StatsActivity extends AppCompatActivity {
 
         coin.setText(available_coin + "");
     }
+
     private void setupLineChart() {
-        ArrayList<Entry> entries = new ArrayList<>();
-        entries.add(new Entry(0, 0));
-        entries.add(new Entry(1, 10));
-        entries.add(new Entry(2, 40));
-        entries.add(new Entry(3, 70));
-        entries.add(new Entry(4, 100));
-        entries.add(new Entry(5, 50));
-        entries.add(new Entry(6, 20));
-        entries.add(new Entry(7, 40));
+        ArrayList<Integer> entries = new ArrayList<>();
+        int last_game_played = sharedPreferences.getInt("last_game_played", 0);
+
+        for (int i = 0; i < last_game_played; i++) {
+            int whole_distance = sharedPreferences.getInt("whole_distance_" + i, 0);
+            entries.add(whole_distance);
+        }
+
+        ArrayList<Entry> averagedEntries = new ArrayList<>();
+        int max = 30;
+        int group_size = (int) Math.ceil((double) last_game_played / max);
+
+        for (int i = 0; i < last_game_played; i += group_size) {
+            int sum = 0;
+            int count = 0;
+
+            for (int j = i; j < i + group_size && j < last_game_played; j++) {
+                sum += entries.get(j); // ✅ Correct index
+                count++;
+            }
+
+            float average = count > 0 ? (float) sum / count : 0;
+            averagedEntries.add(new Entry(averagedEntries.size(), average)); // ✅ Use size as x-value
+        }
+
 
         int primary = getResources().getColor(R.color.primary);
-        LineDataSet dataSet = new LineDataSet(entries, "");
+        LineDataSet dataSet = new LineDataSet(averagedEntries, "");
         dataSet.setColor(primary);
         dataSet.setLineWidth(3f);
         dataSet.setDrawCircles(false);
