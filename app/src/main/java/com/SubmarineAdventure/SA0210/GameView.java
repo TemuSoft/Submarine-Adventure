@@ -23,8 +23,10 @@ public class GameView extends View {
     private Resources resources;
     private Random random;
     boolean isPlaying = true;
-    boolean game_ovr, game_won;
+    boolean game_over, game_won;
     long game_start_time = System.currentTimeMillis(), game_pause_time;
+    int shark_main_update_gap = 1500;
+    long game_over_time, game_won_time;
 
     int score;
     private int xSpeed, ySpeed;
@@ -43,8 +45,18 @@ public class GameView extends View {
     int move_left, move_up;
     int active_decor;
     String image_uri;
+    ArrayList<ArrayList<Integer>> wh = new ArrayList<>();
     ArrayList<Bitmap> bitmaps = new ArrayList<>();
     ArrayList<ArrayList<Integer>> game_data = new ArrayList<>();
+    ArrayList<ArrayList<Long>> shark_data = new ArrayList<>();
+
+
+    int joystick_radius, joystick_x, joystick_y;
+    int move_w_h, move_x, move_y;
+    boolean joystick_on_hold = false;
+    float knob_x, knob_y;
+    float last_dx = 0, last_dy = 0;
+    float rat_angle = 0;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -60,6 +72,106 @@ public class GameView extends View {
 
         initialize_data(res);
         setSpeed();
+        for (int i = 0; i < 10; i++)
+            if (random.nextBoolean() || i < 6) add_bitmap();
+    }
+
+    private void add_bitmap() {
+        int index = random.nextInt(bitmaps.size());
+        int w = wh.get(index).get(0);
+        int h = wh.get(index).get(1);
+        int x = random.nextInt(screenX - w);
+        int y = random.nextInt(screenY - h);
+        long angel = 0;
+        long time = System.currentTimeMillis();
+        long gap = shark_main_update_gap + random.nextInt(shark_main_update_gap);
+        long x_speed = 0;
+        long y_speed = 0;
+
+        boolean has_intersection = false;
+        Rect rect = new Rect(x, y, x + w, y + h);
+        for (int i = 0; i < game_data.size(); i++) {
+            int xx = game_data.get(i).get(0);
+            int yy = game_data.get(i).get(1);
+            int indexx = game_data.get(i).get(2);
+            int ww = wh.get(indexx).get(0);
+            int hh = wh.get(indexx).get(1);
+
+            Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
+            if (Rect.intersects(rect, rect1)) {
+                has_intersection = true;
+                break;
+            }
+        }
+
+        for (int i = 0; i < shark_data.size(); i++) {
+            int xx = Math.toIntExact(shark_data.get(i).get(0));
+            int yy = Math.toIntExact(shark_data.get(i).get(1));
+            int ww = wh.get(SHARK_VALUE).get(0);
+            int hh = wh.get(SHARK_VALUE).get(1);
+
+            Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
+            if (Rect.intersects(rect, rect1)) {
+                has_intersection = true;
+                break;
+            }
+        }
+
+        if (Rect.intersects(rect, getSubmarineCollision())) has_intersection = true;
+
+        if (Rect.intersects(rect, getJoystickArea())) has_intersection = true;
+
+        if (has_intersection) {
+            add_bitmap();
+        } else if (index == SHARK_VALUE) {
+            ArrayList<Long> data = new ArrayList<>();
+            data.add((long) x);
+            data.add((long) y);
+            data.add(angel);
+            data.add(time);
+            data.add(gap);
+            data.add(x_speed);
+            data.add(y_speed);
+            shark_data.add(data);
+            update_cat_direction(shark_data.size() - 1);
+        } else {
+            ArrayList<Integer> data = new ArrayList<>();
+            data.add(x);
+            data.add(y);
+            data.add(index);
+            game_data.add(data);
+        }
+    }
+
+    private void update_cat_direction(int i) {
+        ArrayList<Long> data = shark_data.get(i);
+        long x = data.get(0);
+        long y = data.get(1);
+        long angle = data.get(2);
+        long time = data.get(3);
+        long gap = data.get(4);
+        long x_speed = data.get(5);
+        long y_speed = data.get(6);
+
+        shark_data.get(i).set(3, System.currentTimeMillis());
+        shark_data.get(i).set(4, (long) (shark_main_update_gap + random.nextInt(shark_main_update_gap)));
+
+        float dx = sub_x - x;
+        float dy = sub_y - y;
+
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+        // Always update angle
+        shark_data.get(i).set(2, (long) Math.toDegrees(Math.atan2(dy, dx)));
+
+        if (distance > 0) {
+            float normalizedX = dx / distance;
+            float normalizedY = dy / distance;
+
+            // Set movement speed
+            shark_data.get(i).set(5, (long) (normalizedX * xSpeed * 2 / 5));
+            shark_data.get(i).set(6, (long) (normalizedY * ySpeed * 2 / 5));
+        }
     }
 
     private void initialize_data(Resources res) {
@@ -85,32 +197,68 @@ public class GameView extends View {
             }
         }
 
+        ArrayList<Integer> data = new ArrayList<>();
         pr_w = pearl.getWidth() * scale_per_100 / 100;
         pr_h = pearl.getHeight() * scale_per_100 / 100;
+        data.add(pr_w);
+        data.add(pr_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         tr_w = treasure.getWidth() * scale_per_100 / 100;
         tr_h = treasure.getWidth() * scale_per_100 / 100;
+        data.add(tr_w);
+        data.add(tr_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         co_w = coin.getWidth() * scale_per_100 / 100;
         co_h = coin.getWidth() * scale_per_100 / 100;
+        data.add(co_w);
+        data.add(co_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         shi_w = shimmer.getWidth() * scale_per_100 / 100;
         shi_h = shimmer.getWidth() * scale_per_100 / 100;
+        data.add(shi_w);
+        data.add(shi_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         ox_w = oxygen.getWidth() * scale_per_100 / 100;
         ox_h = oxygen.getWidth() * scale_per_100 / 100;
+        data.add(ox_w);
+        data.add(ox_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         je_w = jelly.getWidth() * scale_per_100 / 100;
         je_h = jelly.getWidth() * scale_per_100 / 100;
+        data.add(je_w);
+        data.add(je_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         sha_w = shark.getWidth() * scale_per_100 / 100;
         sha_h = shark.getWidth() * scale_per_100 / 100;
+        data.add(sha_w);
+        data.add(sha_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         de_w = death.getWidth();
         de_h = death.getWidth();
+        data.add(de_w);
+        data.add(de_h);
+        wh.add(data);
 
+        data = new ArrayList<>();
         sub_w = submarine.getWidth() * scale_per_100 / 100;
         sub_h = submarine.getWidth() * scale_per_100 / 100;
+        data.add(sub_w);
+        data.add(sub_h);
+        wh.add(data);
 
         sub_x = random.nextInt(screenX - sub_w * 5) + sub_w * 2;
         sub_y = random.nextInt(screenX - sub_h * 7) + sub_h * 2;
@@ -132,6 +280,15 @@ public class GameView extends View {
         bitmaps.add(oxygen);
         bitmaps.add(jelly);
         bitmaps.add(shark);
+
+        joystick_radius = screenX / 10;
+        joystick_x = screenX / 2 - joystick_radius;
+        joystick_y = screenY - joystick_radius * 3;
+        move_w_h = joystick_radius * 4;
+        move_x = joystick_x - joystick_radius;
+        move_y = joystick_y - joystick_radius;
+        knob_x = joystick_x + joystick_radius;
+        knob_y = joystick_y + joystick_radius;
     }
 
     public void onDraw(Canvas canvas) {
@@ -139,6 +296,38 @@ public class GameView extends View {
         paint.setStyle(Paint.Style.FILL);
         canvas.drawColor(Color.TRANSPARENT);
 
+        // Draw joystick base
+        paint.setColor(getResources().getColor(R.color.green));
+        canvas.drawCircle(joystick_x + joystick_radius, joystick_y + joystick_radius, joystick_radius, paint);
+
+        // Draw joystick knob
+        paint.setColor(getResources().getColor(R.color.dark_blue));
+        canvas.drawCircle(knob_x, knob_y, joystick_radius / 2, paint);
+
+        for (int i = 0; i < shark_data.size(); i++) {
+            long x = shark_data.get(i).get(0);
+            long y = shark_data.get(i).get(1);
+            long angle = shark_data.get(i).get(2);
+            long time = shark_data.get(i).get(3);
+            long gap = shark_data.get(i).get(4);
+            long x_speed = shark_data.get(i).get(5);
+            long y_speed = shark_data.get(i).get(6);
+
+            canvas.save();
+            canvas.rotate(angle, x + sha_w / 2f, y + sha_h / 2f);
+            canvas.drawBitmap(bitmaps.get(SHARK_VALUE), x, y, paint);
+            canvas.restore();
+        }
+
+        for (int i = 0; i < game_data.size(); i++) {
+            int x = game_data.get(i).get(0);
+            int y = game_data.get(i).get(1);
+            int index = game_data.get(i).get(2);
+            int w = wh.get(index).get(0);
+            int h = wh.get(index).get(1);
+
+            canvas.drawBitmap(bitmaps.get(index), x, y, paint);
+        }
 
         canvas.save();
         canvas.scale(move_left, 1, sub_x + sub_w / 2, sub_y + sub_h / 2);
@@ -153,11 +342,39 @@ public class GameView extends View {
     }
 
     public void update() {
+        for (int i = 0; i < shark_data.size(); i++) {
+            long x = shark_data.get(i).get(0);
+            long y = shark_data.get(i).get(1);
+            long angle = shark_data.get(i).get(2);
+            long time = shark_data.get(i).get(3);
+            long gap = shark_data.get(i).get(4);
+            long x_speed = shark_data.get(i).get(5);
+            long y_speed = shark_data.get(i).get(6);
+        }
+
+
+        for (int i = 0; i < game_data.size(); i++) {
+            int x = game_data.get(i).get(0);
+            int y = game_data.get(i).get(1);
+            int index = game_data.get(i).get(2);
+            int w = wh.get(index).get(0);
+            int h = wh.get(index).get(1);
+        }
 
         invalidate();
     }
 
-    public Rect getSubmarineCollision(){
+
+    public Rect getKnobCollision() {
+        int r = joystick_radius / 2;
+        return new Rect((int) (knob_x - r), (int) (knob_y - r), (int) (knob_x + r), (int) (knob_y + r));
+    }
+
+    public Rect getJoystickArea() {
+        return new Rect(joystick_x, joystick_y, joystick_x + joystick_radius * 2, joystick_y + joystick_radius * 2);
+    }
+
+    public Rect getSubmarineCollision() {
         int mw = sub_w / 6;
         int mh = sub_h / 6;
 

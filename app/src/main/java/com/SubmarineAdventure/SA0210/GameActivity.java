@@ -26,7 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.Random;
 
-public class GameActivity extends AppCompatActivity implements View.OnTouchListener{
+public class GameActivity extends AppCompatActivity implements View.OnTouchListener {
     private ImageView pause;
     private TextView time;
     private ProgressBar oxygen, health;
@@ -93,7 +93,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
         int w = point.x;
         int h = point.y;
-        gameView = new GameView (this, w, h, getResources(), 0);
+        gameView = new GameView(this, w, h, getResources(), 0);
         gameView.setLayoutParams(new LinearLayout.LayoutParams(w, h));
         layout_canvas.addView(gameView);
 
@@ -101,14 +101,22 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
 
-    private void reloading_UI(){
+    private void reloading_UI() {
         Runnable r = new Runnable() {
             public void run() {
-                if (gameView.isPlaying){
-                    gameView.update();
-                    time.setText(Player.formatTime(System.currentTimeMillis() - gameView.game_start_time));
-                    oxygen.setProgress((int) gameView.oxygen_remain);
-                    health.setProgress((int) gameView.health_remain);
+                if (gameView.isPlaying) {
+                    if (!gameView.game_over) {
+                        gameView.update();
+                        time.setText(Player.formatTime(System.currentTimeMillis() - gameView.game_start_time));
+                        oxygen.setProgress((int) gameView.oxygen_remain);
+                        health.setProgress((int) gameView.health_remain);
+                    }
+
+                    if (gameView.game_over && gameView.game_over_time + 1000 < System.currentTimeMillis())
+                        game_over();
+
+                    if (gameView.game_won && gameView.game_won_time + 1000 < System.currentTimeMillis())
+                        game_won();
 
                     reloading_UI();
                 }
@@ -122,9 +130,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         layout_pause_over.setVisibility(VISIBLE);
 
     }
-	
-	
-    private void game_over(){
+
+
+    private void game_over() {
         gameView.isPlaying = false;
         layout_pause_over.setVisibility(VISIBLE);
 
@@ -173,28 +181,54 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                processActionDown(x, y);
+                if (!gameView.game_over) processActionDown(x, y);
                 break;
             case MotionEvent.ACTION_MOVE:
-                processActionMove(x, y);
+                if (gameView.joystick_on_hold) processActionMove(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                processActionUp(x, y);
+                if (gameView.joystick_on_hold) processActionUp(x, y);
                 break;
         }
         return true;
     }
 
     private void processActionDown(int x, int y) {
+        Rect clicked = new Rect(x, y, x, y);
 
+        if (Rect.intersects(clicked, gameView.getKnobCollision())) {
+            gameView.joystick_on_hold = true;
+        }
     }
 
     private void processActionUp(int xp, int yp) {
-        Rect clicked = new Rect(xp, yp, xp ,yp);
-
+        gameView.joystick_on_hold = false;
+        gameView.knob_x = gameView.joystick_x + gameView.joystick_radius;
+        gameView.knob_y = gameView.joystick_y + gameView.joystick_radius;
+        gameView.last_dx = 0;
+        gameView.last_dy = 0;
     }
+
 
     private void processActionMove(int x, int y) {
+        float centerX = gameView.joystick_x + gameView.joystick_radius;
+        float centerY = gameView.joystick_y + gameView.joystick_radius;
 
+        float dx = x - centerX;
+        float dy = y - centerY;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < gameView.joystick_radius) {
+            gameView.knob_x = x;
+            gameView.knob_y = y;
+        } else {
+            float angle = (float) Math.atan2(dy, dx);
+            gameView.knob_x = centerX + gameView.joystick_radius * (float) Math.cos(angle);
+            gameView.knob_y = centerY + gameView.joystick_radius * (float) Math.sin(angle);
+        }
+
+        gameView.last_dx = (gameView.knob_x - centerX) / gameView.joystick_radius;
+        gameView.last_dy = (gameView.knob_y - centerY) / gameView.joystick_radius;
     }
+
 }
