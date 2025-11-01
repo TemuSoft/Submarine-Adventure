@@ -42,7 +42,7 @@ public class StatsActivity extends AppCompatActivity {
     private int available_coin;
     private boolean dive_500m_achieved;
     private int total_artifact_collected;
-    private int distance_traveled, treasure_amount, pearl_amount, coin_amount, shimmer_amount;
+    private int treasure_amount, pearl_amount, coin_amount, shimmer_amount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +59,6 @@ public class StatsActivity extends AppCompatActivity {
         lang = sharedPreferences.getString("lang", "");
         available_coin = sharedPreferences.getInt("available_coin", 0);
         dive_500m_achieved = sharedPreferences.getBoolean("dive_500m_achieved", false);
-        distance_traveled = sharedPreferences.getInt("distance_traveled", 0);
         treasure_amount = sharedPreferences.getInt("treasure_amount", 0);
         pearl_amount = sharedPreferences.getInt("pearl_amount", 0);
         coin_amount = sharedPreferences.getInt("coin_amount", 0);
@@ -90,6 +89,7 @@ public class StatsActivity extends AppCompatActivity {
         reset_progress.setOnClickListener(View -> {
             Player.button(soundMute);
 
+            editor.putInt("last_game_played", 0);
             editor.putInt("distance_traveled", 0);
             editor.putInt("treasure_amount", 0);
             editor.putInt("pearl_amount", 0);

@@ -12,7 +12,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
-import android.util.Log;
 import android.view.View;
 
 import java.io.InputStream;
@@ -43,7 +42,7 @@ public class GameView extends View {
     int PEARL_VALUE = 0, TREASURE_VALUE = 1, COIN_VALUE = 2, SHIMMER_VALUE = 3, OXYGEN_VALUE = 4, JELLY_VALUE = 5, SHARK_VALUE = 6;
     int scale_per_100 = 70;
     float health_remain = 100, oxygen_remain = 100;
-    Bitmap pearl, treasure, coin, shimmer, oxygen, jelly, shark, death, submarine;
+    Bitmap pearl, treasure, coin, shimmer, oxygen, jelly, shark, death, submarine, bubble;
     int pr_w, pr_h, tr_w, tr_h;
     int co_w, co_h, shi_w, shi_h;
     int ox_w, ox_h, je_w, je_h;
@@ -54,13 +53,18 @@ public class GameView extends View {
     float sub_angle = 0;
     String image_uri;
     ArrayList<ArrayList<Integer>> wh = new ArrayList<>();
+    ArrayList<Bitmap> decors = new ArrayList<>();
     ArrayList<Bitmap> bitmaps = new ArrayList<>();
     ArrayList<ArrayList<Integer>> game_data = new ArrayList<>();
     ArrayList<ArrayList<Long>> game_data_two = new ArrayList<>();
-    int depth = 100, time = 1000 * 60 * 3;
-    int depth_gap = 15, time_gap = 1000 * 10;
+    ArrayList<Integer> bubble_data = new ArrayList<>();
+    ArrayList<Integer> decor_data = new ArrayList<>();
+
+    int depth = 150, time = 1000 * 60 * 3;
+    int depth_gap = 20, time_gap = 1000 * 10;
     int playLevel, lastLevelActive;
     int min_x, min_y, max_x, max_y, padding;
+    int bottom_y;
 
     int joystick_radius, joystick_x, joystick_y;
     int move_w_h, move_x, move_y;
@@ -73,6 +77,7 @@ public class GameView extends View {
     int submarine_direction = 1;
     int main_speed, main_armor;
     int screen_in_meeter = 10;
+    int bub_w, bub_h;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -99,9 +104,31 @@ public class GameView extends View {
         main_armor = sharedPreferences.getInt("body_1", 0);
 
         initialize_data(res);
+        add_decor_bubble();
         setSpeed();
         for (int i = 0; i < 10; i++)
             if (random.nextBoolean() || i < 7) add_bitmap(true);
+    }
+
+    private void add_decor_bubble() {
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 10; j++) {
+                int index = random.nextInt(decors.size());
+                decor_data.add(index);
+            }
+        }
+
+        int s = 1 + random.nextInt(3);
+        if (s == 1) {
+            bubble_data.add(bub_w + random.nextInt(screenX - bub_w * 2));
+        } else if (s == 2) {
+            bubble_data.add(random.nextInt(screenX / 2 - bub_w) + bub_w);
+            bubble_data.add(random.nextInt(screenX / 2 - bub_w) + screenX / 2);
+        } else {
+            bubble_data.add(random.nextInt(screenX / 3));
+            bubble_data.add(random.nextInt(screenX / 3) + screenX * 1 / 3);
+            bubble_data.add(random.nextInt(screenX / 3) + screenX * 2 / 3);
+        }
     }
 
     private void setSpeed() {
@@ -224,6 +251,17 @@ public class GameView extends View {
         shark = BitmapFactory.decodeResource(res, R.drawable.shark);
         death = BitmapFactory.decodeResource(res, R.drawable.death);
         submarine = BitmapFactory.decodeResource(res, subs[active_decor]);
+        bubble = BitmapFactory.decodeResource(res, R.drawable.buble);
+
+        int[] dec = new int[]{R.drawable.side_decor_0, R.drawable.side_decor_1, R.drawable.side_decor_2};
+        for (int j : dec) {
+            Bitmap bitmap = BitmapFactory.decodeResource(res, j);
+            int w = bitmap.getWidth() * scale_per_100 / 100;
+            int h = bitmap.getHeight() * scale_per_100 / 100;
+
+            decors.add(Bitmap.createScaledBitmap(bitmap, w, h, false));
+        }
+
         if (active_decor == 4) {
             try {
                 URL url = new URL(image_uri);
@@ -302,6 +340,10 @@ public class GameView extends View {
 
         sub_x = screenX * 2 / 5 + random.nextInt(screenX / 5);
         sub_y = screenY * 2 / 5 + random.nextInt(screenY / 5);
+        bottom_y = sub_y + depth * screenY / screen_in_meeter;
+
+        bub_w = bubble.getWidth() * scale_per_100 / 200;
+        bub_h = bubble.getHeight() * scale_per_100 / 200;
 
         pearl = Bitmap.createScaledBitmap(pearl, pr_w, pr_h, false);
         treasure = Bitmap.createScaledBitmap(treasure, tr_w, tr_h, false);
@@ -312,6 +354,7 @@ public class GameView extends View {
         shark = Bitmap.createScaledBitmap(shark, sha_w, sha_h, false);
         death = Bitmap.createScaledBitmap(death, de_w, de_h, false);
         submarine = Bitmap.createScaledBitmap(submarine, sub_w, sub_h, false);
+        bubble = Bitmap.createScaledBitmap(bubble, bub_w, bub_h, false);
 
         bitmaps.add(pearl);
         bitmaps.add(treasure);
@@ -382,6 +425,39 @@ public class GameView extends View {
             canvas.drawBitmap(death, x, y, paint);
         }
 
+        if (bottom_y - bub_h <= screenY) {
+            for (int i = 0; i < bubble_data.size(); i++) {
+                int x = bubble_data.get(i);
+                canvas.drawBitmap(bubble, x, bottom_y - bub_h, paint);
+            }
+        }
+
+        int last_y = bottom_y;
+        for (int i = 0; i < decor_data.size() / 2; i++) {
+            int index = decor_data.get(i);
+            int w = decors.get(index).getWidth();
+            int h = decors.get(index).getHeight();
+            int gap = i == 0 ? 0 : h / 4;
+
+            last_y -= h;
+            last_y += gap;
+
+            if (last_y < screenY) canvas.drawBitmap(decors.get(index), 0, last_y, paint);
+        }
+
+
+        last_y = bottom_y;
+        for (int i = decor_data.size() / 2; i < decor_data.size(); i++) {
+            int index = decor_data.get(i);
+            int w = decors.get(index).getWidth();
+            int h = decors.get(index).getHeight();
+            int gap = i == 0 ? 0 : h / 4;
+
+            last_y -= h;
+            last_y += gap;
+            if (last_y < screenY) canvas.drawBitmap(decors.get(index), screenX - w, last_y, paint);
+        }
+
         // Draw joystick base
         paint.setColor(getResources().getColor(R.color.green));
         canvas.drawCircle(joystick_x + joystick_radius, joystick_y + joystick_radius, joystick_radius, paint);
@@ -405,7 +481,7 @@ public class GameView extends View {
                 int x_speed = (int) (Math.cos(movementAngle) * main_xSpeed);
                 int y_speed = (int) (Math.sin(movementAngle) * main_ySpeed);
 
-                move_left = Integer.compare(x_speed, 0);
+                move_left = Integer.compare(x_speed * -1, 0);
                 move_up = Integer.compare(y_speed, 0);
 
                 submarine_direction = move_left == 0 ? 1 : move_left;
@@ -437,6 +513,9 @@ public class GameView extends View {
                 // sub_y = Math.max(0, Math.min(rat_y, screenY - rat_h));
             }
         }
+
+        bottom_y += ySpeed * move_up;
+        if (bottom_y < screenY) bottom_y = screenY;
 
         for (int i = 0; i < game_data_two.size(); i++) {
             ArrayList<Long> data = game_data_two.get(i);
@@ -641,13 +720,6 @@ public class GameView extends View {
     public Rect getScreenCollision() {
         return new Rect(0, 0, screenX, screenY);
     }
-//
-//    public Rect getSubmarineCollision() {
-//        int mw = sub_w / 6;
-//        int mh = sub_h / 6;
-//
-//        return new Rect(sub_x + mw, sub_y + mh, sub_x + sub_w - mw, sub_y + sub_h - mh);
-//    }
 
     public Path getSubArea() {
         int mw = sub_w / 6;
@@ -665,7 +737,6 @@ public class GameView extends View {
 
         return path;
     }
-
 
     private boolean path_object_intersection(Path path, Rect object) {
         boolean path_object_intersection = false;
