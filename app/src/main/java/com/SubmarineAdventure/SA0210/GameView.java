@@ -72,7 +72,7 @@ public class GameView extends View {
     double whole_distance = 0;
     int submarine_direction = 1;
     int main_speed, main_armor;
-    int screen_in_metter = 20;
+    int screen_in_meeter = 10;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -104,7 +104,7 @@ public class GameView extends View {
             if (random.nextBoolean() || i < 7) add_bitmap(true);
     }
 
-    private void setSpeed(){
+    private void setSpeed() {
         main_xSpeed = screenX / 200;
         main_ySpeed = screenY / 200;
     }
@@ -124,8 +124,8 @@ public class GameView extends View {
         boolean has_intersection = false;
         Rect rect = new Rect(x, y, x + w, y + h);
         if (Rect.intersects(rect, getScreenCollision()) && !is_initial) has_intersection = true;
-        
-        if (!has_intersection){
+
+        if (!has_intersection) {
             for (int i = 0; i < game_data.size(); i++) {
                 int xx = game_data.get(i).get(0);
                 int yy = game_data.get(i).get(1);
@@ -179,8 +179,7 @@ public class GameView extends View {
                 data.add(index);
                 game_data.add(data);
             }
-        }else
-            add_bitmap(is_initial);
+        } else add_bitmap(is_initial);
     }
 
     private void update_direction(int i) {
@@ -210,8 +209,8 @@ public class GameView extends View {
             float normalizedY = dy / distance;
 
             // Set movement speed
-            game_data_two.get(i).set(6, (long) (normalizedX * xSpeed * 2 / 5));
-            game_data_two.get(i).set(7, (long) (normalizedY * ySpeed * 2 / 5));
+            game_data_two.get(i).set(6, (long) (normalizedX * main_xSpeed * 2 / 5));
+            game_data_two.get(i).set(7, (long) (normalizedY * main_ySpeed * 2 / 5));
         }
     }
 
@@ -350,7 +349,7 @@ public class GameView extends View {
             int w = bitmaps.get((int) index).getWidth();
             int h = bitmaps.get((int) index).getHeight();
 
-            if (x < 0 - w || x > screenX || y < 0 - h|| y > screenY) continue;
+            if (x < 0 - w || x > screenX || y < 0 - h || y > screenY) continue;
 
             if (index == JELLY_VALUE) angle = 0;
 
@@ -367,7 +366,7 @@ public class GameView extends View {
             int w = wh.get(index).get(0);
             int h = wh.get(index).get(1);
 
-            if (x < 0 - w || x > screenX || y < 0 - h|| y > screenY) continue;
+            if (x < 0 - w || x > screenX || y < 0 - h || y > screenY) continue;
 
             canvas.drawBitmap(bitmaps.get(index), x, y, paint);
         }
@@ -377,7 +376,7 @@ public class GameView extends View {
         canvas.drawBitmap(submarine, sub_x, sub_y, paint);
         canvas.restore();
 
-        if (game_over){
+        if (game_over) {
             int x = sub_x + sub_w / 2 - de_w / 2;
             int y = sub_y + sub_h / 2 - de_h / 2;
             canvas.drawBitmap(death, x, y, paint);
@@ -409,11 +408,9 @@ public class GameView extends View {
                 move_left = Integer.compare(x_speed, 0);
                 move_up = Integer.compare(y_speed, 0);
 
-                Log.e("x_speed y_speed", x_speed + " " + y_speed);
-
                 submarine_direction = move_left == 0 ? 1 : move_left;
 
-                if (jelly_touched){
+                if (jelly_touched) {
                     x_speed = x_speed * 1 / 2;
                     y_speed = y_speed * 1 / 2;
                 }
@@ -425,10 +422,33 @@ public class GameView extends View {
                 x_distance += x_speed;
                 y_distance += y_speed;
 
+//                whole_distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
+                whole_distance = Math.sqrt(Math.pow(y_distance, 2));
+                whole_distance = whole_distance * screen_in_meeter / screenY;
+
+                if (whole_distance >= depth) {
+                    Player.vibrate((Activity) context, onVibrating, 500);
+                    game_won = true;
+                    game_won_time = System.currentTimeMillis();
+                }
 
                 // Clamp to screen
                 // sub_x = Math.max(0, Math.min(rat_x, screenX - rat_w));
                 // sub_y = Math.max(0, Math.min(rat_y, screenY - rat_h));
+            }
+        }
+
+        for (int i = 0; i < game_data_two.size(); i++) {
+            ArrayList<Long> data = game_data_two.get(i);
+            long x = data.get(0);
+            long y = data.get(1);
+            long index = data.get(2);
+            long angle = data.get(3);
+            long time = data.get(4);
+            long gap = data.get(5);
+
+            if (time + gap < System.currentTimeMillis()) {
+                update_direction(i);
             }
         }
 
@@ -477,7 +497,7 @@ public class GameView extends View {
             int index = game_data.get(i).get(2);
             int w = wh.get(index).get(0);
             int h = wh.get(index).get(1);
-            
+
             // To make movment against the submarine
             x += xSpeed * move_left;
             y += ySpeed * move_up;
@@ -506,13 +526,6 @@ public class GameView extends View {
         }
 
         check_collision();
-        whole_distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
-        whole_distance = whole_distance * screen_in_metter / screenY;
-        if (whole_distance >= depth) {
-            Player.vibrate((Activity) context, onVibrating, 500);
-            game_won = true;
-            game_won_time = System.currentTimeMillis();
-        }
 
         if (time < System.currentTimeMillis() - game_start_time || oxygen_remain <= 0 || health_remain <= 0) {
             Player.vibrate((Activity) context, onVibrating, 500);
@@ -520,14 +533,14 @@ public class GameView extends View {
             game_over_time = System.currentTimeMillis();
         }
 
-        if (jelly_touched){
-            if (jelly_touched_time + jelly_duration < System.currentTimeMillis()){
+        if (jelly_touched) {
+            if (jelly_touched_time + jelly_duration < System.currentTimeMillis()) {
                 jelly_touched_time = 0;
                 jelly_touched = false;
             }
         }
 
-        if (oxygen_health_last_time + deduction_gap < System.currentTimeMillis()){
+        if (oxygen_health_last_time + deduction_gap < System.currentTimeMillis()) {
             oxygen_health_last_time = System.currentTimeMillis();
             oxygen_remain -= oxygen_health_deduction * 2;
             health_remain -= oxygen_health_deduction;
@@ -625,7 +638,7 @@ public class GameView extends View {
         return new Rect(joystick_x, joystick_y, joystick_x + joystick_radius * 2, joystick_y + joystick_radius * 2);
     }
 
-    public Rect getScreenCollision(){
+    public Rect getScreenCollision() {
         return new Rect(0, 0, screenX, screenY);
     }
 //

@@ -126,7 +126,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         Runnable r = new Runnable() {
             public void run() {
                 if (gameView.isPlaying) {
-                    if (!gameView.game_over) {
+                    if (!gameView.game_over && !gameView.game_won) {
                         gameView.update();
                         time.setText(Player.formatTime(System.currentTimeMillis() - gameView.game_start_time));
                         oxygen.setProgress((int) gameView.oxygen_remain);
@@ -211,6 +211,8 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         if (gameView.lastLevelActive < gameView.playLevel) {
             gameView.lastLevelActive = gameView.playLevel;
         }
+
+        if (gameView.whole_distance >= 500) editor.putBoolean("dive_500m_achieved", true);
         editor.putInt("whole_distance_" + last_game_played, (int) gameView.whole_distance);
         editor.putInt("last_game_played", last_game_played + 1);
         editor.putInt("playLevel", gameView.playLevel);
