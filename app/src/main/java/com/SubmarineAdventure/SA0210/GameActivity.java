@@ -133,11 +133,11 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
                         health.setProgress((int) gameView.health_remain);
                     }
 
-                    if (gameView.game_over && gameView.game_over_time + 1000 < System.currentTimeMillis())
-                        game_over();
-
                     if (gameView.game_won && gameView.game_won_time + 1000 < System.currentTimeMillis())
                         game_won();
+                    else if (gameView.game_over && gameView.game_over_time + 1000 < System.currentTimeMillis())
+                        game_over();
+
 
                     reloading_UI();
                 }
@@ -269,7 +269,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (!gameView.game_over) processActionDown(x, y);
+                if (!gameView.game_over && !gameView.game_won) processActionDown(x, y);
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (gameView.joystick_on_hold) processActionMove(x, y);

@@ -1,5 +1,6 @@
 package com.SubmarineAdventure.SA0210;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -11,6 +12,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 
 import java.io.InputStream;
@@ -24,17 +26,17 @@ public class GameView extends View {
     private int screenX, screenY;
     private Resources resources;
     private Random random;
-    boolean isPlaying = true;
+    boolean isPlaying = true, onVibrating;
     boolean game_over, game_won, jelly_touched;
     long game_start_time = System.currentTimeMillis(), game_pause_time;
-    int shark_main_update_gap = 1500, jelly_duration = 1500;
+    int shark_main_update_gap = 1500, jelly_duration = 3000;
     long game_over_time, game_won_time, jelly_touched_time;
     int deduction_gap = 900;
     float oxygen_health_deduction = 0.5f;
     long oxygen_health_last_time = System.currentTimeMillis();
 
 
-    private int xSpeed, ySpeed;
+    private int xSpeed, ySpeed, main_xSpeed, main_ySpeed;
     private Context context;
 
     int[] subs = new int[]{R.drawable.decor_0, R.drawable.decor_1, R.drawable.decor_2, R.drawable.decor_3, R.drawable.decor_4};
@@ -68,6 +70,9 @@ public class GameView extends View {
     int x_distance, y_distance;
     int pearl_amount, treasure_amount, coin_amount;
     double whole_distance = 0;
+    int submarine_direction = 1;
+    int main_speed, main_armor;
+    int screen_in_metter = 20;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -89,14 +94,22 @@ public class GameView extends View {
         image_uri = sharedPreferences.getString("image_uri", "");
         playLevel = sharedPreferences.getInt("playLevel", 1);
         lastLevelActive = sharedPreferences.getInt("lastLevelActive", 1);
+        onVibrating = sharedPreferences.getBoolean("onVibrating", false);
+        main_speed = sharedPreferences.getInt("body_0", 0);
+        main_armor = sharedPreferences.getInt("body_1", 0);
 
         initialize_data(res);
         setSpeed();
         for (int i = 0; i < 10; i++)
-            if (random.nextBoolean() || i < 7) add_bitmap();
+            if (random.nextBoolean() || i < 7) add_bitmap(true);
     }
 
-    private void add_bitmap() {
+    private void setSpeed(){
+        main_xSpeed = screenX / 200;
+        main_ySpeed = screenY / 200;
+    }
+
+    private void add_bitmap(boolean is_initial) {
         int index = random.nextInt(bitmaps.size());
         int w = wh.get(index).get(0);
         int h = wh.get(index).get(1);
@@ -110,59 +123,64 @@ public class GameView extends View {
 
         boolean has_intersection = false;
         Rect rect = new Rect(x, y, x + w, y + h);
-        for (int i = 0; i < game_data.size(); i++) {
-            int xx = game_data.get(i).get(0);
-            int yy = game_data.get(i).get(1);
-            int indexx = game_data.get(i).get(2);
-            int ww = wh.get(indexx).get(0);
-            int hh = wh.get(indexx).get(1);
+        if (Rect.intersects(rect, getScreenCollision()) && !is_initial) has_intersection = true;
+        
+        if (!has_intersection){
+            for (int i = 0; i < game_data.size(); i++) {
+                int xx = game_data.get(i).get(0);
+                int yy = game_data.get(i).get(1);
+                int indexx = game_data.get(i).get(2);
+                int ww = wh.get(indexx).get(0);
+                int hh = wh.get(indexx).get(1);
 
-            Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
-            if (Rect.intersects(rect, rect1)) {
-                has_intersection = true;
-                break;
+                Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
+                if (Rect.intersects(rect, rect1)) {
+                    has_intersection = true;
+                    break;
+                }
             }
-        }
 
-        for (int i = 0; i < game_data_two.size(); i++) {
-            int xx = Math.toIntExact(game_data_two.get(i).get(0));
-            int yy = Math.toIntExact(game_data_two.get(i).get(1));
-            int indexx = Math.toIntExact(game_data_two.get(i).get(2));
-            int ww = wh.get(indexx).get(0);
-            int hh = wh.get(indexx).get(1);
+            for (int i = 0; i < game_data_two.size(); i++) {
+                int xx = Math.toIntExact(game_data_two.get(i).get(0));
+                int yy = Math.toIntExact(game_data_two.get(i).get(1));
+                int indexx = Math.toIntExact(game_data_two.get(i).get(2));
+                int ww = wh.get(indexx).get(0);
+                int hh = wh.get(indexx).get(1);
 
-            Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
-            if (Rect.intersects(rect, rect1)) {
-                has_intersection = true;
-                break;
+                Rect rect1 = new Rect(xx, yy, xx + ww, yy + hh);
+                if (Rect.intersects(rect, rect1)) {
+                    has_intersection = true;
+                    break;
+                }
             }
-        }
 
-        if (path_object_intersection(getSubArea(), rect)) has_intersection = true;
+            if (path_object_intersection(getSubArea(), rect)) has_intersection = true;
 
-        if (Rect.intersects(rect, getJoystickArea())) has_intersection = true;
+            if (Rect.intersects(rect, getJoystickArea())) has_intersection = true;
 
-        if (has_intersection) {
-            add_bitmap();
-        } else if (index == SHARK_VALUE || index == JELLY_VALUE) {
-            ArrayList<Long> data = new ArrayList<>();
-            data.add((long) x);
-            data.add((long) y);
-            data.add((long) index);
-            data.add(angel);
-            data.add(time);
-            data.add(gap);
-            data.add(x_speed);
-            data.add(y_speed);
-            game_data_two.add(data);
-            update_direction(game_data_two.size() - 1);
-        } else {
-            ArrayList<Integer> data = new ArrayList<>();
-            data.add(x);
-            data.add(y);
-            data.add(index);
-            game_data.add(data);
-        }
+            if (has_intersection) {
+                add_bitmap(is_initial);
+            } else if (index == SHARK_VALUE || index == JELLY_VALUE) {
+                ArrayList<Long> data = new ArrayList<>();
+                data.add((long) x);
+                data.add((long) y);
+                data.add((long) index);
+                data.add(angel);
+                data.add(time);
+                data.add(gap);
+                data.add(x_speed);
+                data.add(y_speed);
+                game_data_two.add(data);
+                update_direction(game_data_two.size() - 1);
+            } else {
+                ArrayList<Integer> data = new ArrayList<>();
+                data.add(x);
+                data.add(y);
+                data.add(index);
+                game_data.add(data);
+            }
+        }else
+            add_bitmap(is_initial);
     }
 
     private void update_direction(int i) {
@@ -319,14 +337,6 @@ public class GameView extends View {
         paint.setStyle(Paint.Style.FILL);
         canvas.drawColor(Color.TRANSPARENT);
 
-        // Draw joystick base
-        paint.setColor(getResources().getColor(R.color.green));
-        canvas.drawCircle(joystick_x + joystick_radius, joystick_y + joystick_radius, joystick_radius, paint);
-
-        // Draw joystick knob
-        paint.setColor(getResources().getColor(R.color.dark_blue));
-        canvas.drawCircle(knob_x, knob_y, joystick_radius / 2, paint);
-
         for (int i = 0; i < game_data_two.size(); i++) {
             ArrayList<Long> data = game_data_two.get(i);
             long x = data.get(0);
@@ -340,7 +350,7 @@ public class GameView extends View {
             int w = bitmaps.get((int) index).getWidth();
             int h = bitmaps.get((int) index).getHeight();
 
-            if (x < 0 || x > screenX - w || y < 0 || y > screenY - h) continue;
+            if (x < 0 - w || x > screenX || y < 0 - h|| y > screenY) continue;
 
             if (index == JELLY_VALUE) angle = 0;
 
@@ -357,14 +367,13 @@ public class GameView extends View {
             int w = wh.get(index).get(0);
             int h = wh.get(index).get(1);
 
-            if (x < 0 || x > screenX - w || y < 0 || y > screenY - h) continue;
+            if (x < 0 - w || x > screenX || y < 0 - h|| y > screenY) continue;
 
             canvas.drawBitmap(bitmaps.get(index), x, y, paint);
         }
 
         canvas.save();
-        int vv = move_left == 0 ? 1 : move_left;
-        canvas.scale(vv, 1, sub_x + sub_w / 2, sub_y + sub_h / 2);
+        canvas.scale(submarine_direction * -1, 1, sub_x + sub_w / 2, sub_y + sub_h / 2);
         canvas.drawBitmap(submarine, sub_x, sub_y, paint);
         canvas.restore();
 
@@ -373,11 +382,14 @@ public class GameView extends View {
             int y = sub_y + sub_h / 2 - de_h / 2;
             canvas.drawBitmap(death, x, y, paint);
         }
-    }
 
-    private void setSpeed() {
-        xSpeed = screenX / 80;
-        ySpeed = screenY / 80;
+        // Draw joystick base
+        paint.setColor(getResources().getColor(R.color.green));
+        canvas.drawCircle(joystick_x + joystick_radius, joystick_y + joystick_radius, joystick_radius, paint);
+
+        // Draw joystick knob
+        paint.setColor(getResources().getColor(R.color.dark_blue));
+        canvas.drawCircle(knob_x, knob_y, joystick_radius / 2, paint);
     }
 
     public void update() {
@@ -388,28 +400,35 @@ public class GameView extends View {
 
             if (distance > joystick_radius * 0.2f) {
                 float movementAngle = (float) Math.atan2(dy, dx);
-                sub_angle = (float) Math.toDegrees(movementAngle); // for drawing
+                sub_angle = (float) Math.toDegrees(movementAngle);
 
                 // Move in the direction of movementAngle (not angle)
-                int x_speed = (int) (Math.cos(movementAngle) * xSpeed);
-                int y_speed = (int) Math.sin(movementAngle) * ySpeed;
+                int x_speed = (int) (Math.cos(movementAngle) * main_xSpeed);
+                int y_speed = (int) (Math.sin(movementAngle) * main_ySpeed);
 
                 move_left = Integer.compare(x_speed, 0);
                 move_up = Integer.compare(y_speed, 0);
 
+                Log.e("x_speed y_speed", x_speed + " " + y_speed);
+
+                submarine_direction = move_left == 0 ? 1 : move_left;
+
                 if (jelly_touched){
-                    x_speed = x_speed * 2 / 3;
-                    y_speed = y_speed * 2 / 3;
+                    x_speed = x_speed * 1 / 2;
+                    y_speed = y_speed * 1 / 2;
                 }
 
-                sub_x += x_speed;
-                sub_y += y_speed;
-                x_distance += xSpeed;
-                y_distance += y_distance;
+                // 6 is the maximun speed
+                xSpeed = Math.abs(x_speed + x_speed * main_speed / 6);
+                ySpeed = Math.abs(y_speed + y_speed * main_speed / 6);
+
+                x_distance += x_speed;
+                y_distance += y_speed;
+
 
                 // Clamp to screen
-                sub_x = Math.max(0, Math.min(sub_x, screenX - sub_w));
-                sub_y = Math.max(0, Math.min(sub_y, screenY - sub_h));
+                // sub_x = Math.max(0, Math.min(rat_x, screenX - rat_w));
+                // sub_y = Math.max(0, Math.min(rat_y, screenY - rat_h));
             }
         }
 
@@ -423,9 +442,12 @@ public class GameView extends View {
             long gap = data.get(5);
             long x_speed = data.get(6);
             long y_speed = data.get(7);
+            x += x_speed;
+            y += y_speed;
 
-            x += xSpeed * move_left + x_speed;
-            y += ySpeed * move_up + y_speed;
+            // To make movment against the submarine
+            x += xSpeed * move_left + -1;
+            y += ySpeed * move_up + -1;
             game_data_two.get(i).set(0, x);
             game_data_two.get(i).set(1, y);
         }
@@ -438,13 +460,13 @@ public class GameView extends View {
 
             if (x < min_x || x > max_x - bitmaps.get((int) index).getWidth()) {
                 game_data_two.remove(i);
-                add_bitmap();
+                add_bitmap(false);
                 break;
             }
 
             if (y < min_y || y > max_y - bitmaps.get((int) index).getWidth()) {
                 game_data_two.remove(i);
-                add_bitmap();
+                add_bitmap(false);
                 break;
             }
         }
@@ -455,7 +477,8 @@ public class GameView extends View {
             int index = game_data.get(i).get(2);
             int w = wh.get(index).get(0);
             int h = wh.get(index).get(1);
-
+            
+            // To make movment against the submarine
             x += xSpeed * move_left;
             y += ySpeed * move_up;
             game_data.get(i).set(0, x);
@@ -471,25 +494,28 @@ public class GameView extends View {
 
             if (x < min_x || x > max_x - w) {
                 game_data.remove(i);
-                add_bitmap();
+                add_bitmap(false);
                 break;
             }
 
             if (y < min_y || y > max_y - h) {
                 game_data.remove(i);
-                add_bitmap();
+                add_bitmap(false);
                 break;
             }
         }
 
         check_collision();
         whole_distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
+        whole_distance = whole_distance * screen_in_metter / screenY;
         if (whole_distance >= depth) {
+            Player.vibrate((Activity) context, onVibrating, 500);
             game_won = true;
             game_won_time = System.currentTimeMillis();
         }
 
         if (time < System.currentTimeMillis() - game_start_time || oxygen_remain <= 0 || health_remain <= 0) {
+            Player.vibrate((Activity) context, onVibrating, 500);
             game_over = true;
             game_over_time = System.currentTimeMillis();
         }
@@ -503,7 +529,7 @@ public class GameView extends View {
 
         if (oxygen_health_last_time + deduction_gap < System.currentTimeMillis()){
             oxygen_health_last_time = System.currentTimeMillis();
-            oxygen_remain -= oxygen_health_deduction;
+            oxygen_remain -= oxygen_health_deduction * 2;
             health_remain -= oxygen_health_deduction;
 
             if (oxygen_remain < 0) oxygen_remain = 0;
@@ -531,17 +557,18 @@ public class GameView extends View {
 
             Rect rect1 = new Rect((int) x, (int) y, (int) (x + ww), (int) (y + hh));
             if (path_object_intersection(path, rect1)) {
+                Player.vibrate((Activity) context, onVibrating, 100);
                 if (index == JELLY_VALUE) {
-                    health_remain -= 2;
+                    health_remain -= 5;
                     jelly_touched_time = System.currentTimeMillis();
                     jelly_touched = true;
                     game_data_two.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 } else if (index == SHARK_VALUE) {
-                    health_remain -= 5;
+                    health_remain -= 10;
                     game_data_two.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 }
             }
@@ -559,30 +586,30 @@ public class GameView extends View {
                 if (index == PEARL_VALUE) {
                     pearl_amount++;
                     game_data.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 } else if (index == TREASURE_VALUE) {
                     treasure_amount++;
                     game_data.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 } else if (index == COIN_VALUE) {
                     coin_amount++;
                     game_data.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 } else if (index == SHIMMER_VALUE) {
                     // do nothing for now
                     health_remain += 5;
                     if (health_remain > 100) health_remain = 100;
                     game_data.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 } else if (index == OXYGEN_VALUE) {
                     oxygen_remain += 5;
                     if (oxygen_remain > 100) oxygen_remain = 100;
                     game_data.remove(i);
-                    add_bitmap();
+                    add_bitmap(false);
                     break;
                 }
             }
@@ -596,6 +623,10 @@ public class GameView extends View {
 
     public Rect getJoystickArea() {
         return new Rect(joystick_x, joystick_y, joystick_x + joystick_radius * 2, joystick_y + joystick_radius * 2);
+    }
+
+    public Rect getScreenCollision(){
+        return new Rect(0, 0, screenX, screenY);
     }
 //
 //    public Rect getSubmarineCollision() {

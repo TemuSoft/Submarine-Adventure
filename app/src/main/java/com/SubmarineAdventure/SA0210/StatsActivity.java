@@ -145,12 +145,12 @@ public class StatsActivity extends AppCompatActivity {
             int count = 0;
 
             for (int j = i; j < i + group_size && j < last_game_played; j++) {
-                sum += entries.get(j); // ✅ Correct index
+                sum += entries.get(j);
                 count++;
             }
 
             float average = count > 0 ? (float) sum / count : 0;
-            averagedEntries.add(new Entry(averagedEntries.size(), average)); // ✅ Use size as x-value
+            averagedEntries.add(new Entry(averagedEntries.size(), average));
         }
 
 
